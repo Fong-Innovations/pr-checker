@@ -27,4 +27,4 @@ WORKDIR /app
 EXPOSE 8080
 
 # RUN MAIN
-CMD ["/app"]
+CMD ["/app/main"]
