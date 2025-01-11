@@ -15,6 +15,7 @@ func SetupRouter() *gin.Engine {
 	api := r.Group("/v1/api")
 	{
 		api.GET("/hello", handler.HelloHandler)
+		api.POST("/analyze/pr", handler.AnalyzePR)
 
 	}
 
