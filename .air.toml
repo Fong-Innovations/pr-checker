@@ -1,0 +1,24 @@
+# .air.toml configuration for air live-reload tool
+
+# Build settings
+[build]
+  # Binary output location
+  bin = "bin/app"
+
+  # Run tests before building the binary
+  run_tests = false
+
+  # Watch these directories for changes
+  exclude_dir = ["assets", "tmp", "vendor"]
+  
+  # Additional build arguments
+  cmd = "go run main.go"
+
+  # Delay between rebuilds
+  delay = 2000 # milliseconds
+
+# Logs settings
+[color]
+  main = "yellow"
+  watcher = "cyan"
+  builder = "magenta"

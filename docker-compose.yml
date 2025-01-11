@@ -1,0 +1,12 @@
+version: "3.8"
+
+# one for each dockerfile we are managing
+services:
+  web:
+    build: .
+    platform: linux/arm64 # required to run in cloud
+    ports:
+      - "8080:8080"
+    environment:
+      # LOCAL: "false"
+      PORT: 8080
