@@ -12,3 +12,10 @@ func HelloHandler(c *gin.Context) {
 		"message": "Hello from external router!",
 	})
 }
+
+// HelloHandler is the handler for the /hello route
+func Testing(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Hello from testing!",
+	})
+}

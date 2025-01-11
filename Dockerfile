@@ -1,4 +1,7 @@
-FROM --platform=linux/amd64 golang:alpine as builder 
+FROM --platform=linux/amd64 golang:latest as builder 
+
+
+RUN go get -u github.com/cosmtrek/air
 
 # CREATE A FOLDER FOR OUR BUILD
 RUN mkdir /build
@@ -13,11 +16,6 @@ RUN go build -o main .
 # STAGE 2 
 FROM alpine
 
-# CREATE A USER
-RUN adduser -S -D -H -h /app appuser
-
-USER appuser
-
 COPY . /app
 
 COPY --from=builder /build/main /app/
@@ -26,5 +24,4 @@ WORKDIR /app
 
 EXPOSE 8080
 
-# RUN MAIN
-CMD ["/app/main"]
+ENTRYPOINT ["air"]
