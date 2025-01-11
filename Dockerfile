@@ -1,8 +1,5 @@
 FROM --platform=linux/amd64 golang:latest as builder 
 
-
-RUN go get -u github.com/cosmtrek/air
-
 # CREATE A FOLDER FOR OUR BUILD
 RUN mkdir /build
 ADD . /build/
