@@ -1,69 +1,64 @@
 package handlers
 
 import (
-	"encoding/json"
+	"ai-api/models"
+	"ai-api/services"
 	"fmt"
-	"io"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	// "github.com/gofiber/fiber/v2/log"
 )
 
-type PullRequest struct {
-	ID       string
-	Owner    string
-	Repo     string
-	Comments []Comment
+// PRHandler represents the handler for handling PR-related requests
+type PRHandler struct {
+	Service services.PRService
 }
 
-type PullRequestRequest struct {
-	ID      string `json:"id"`
-	OwnerID string `json:"owner_id"`
-	RepoID  string `json:"repo_id"`
-}
-
-type PullRequestResponse struct {
-	ID          string
-	PullRequest PullRequest
-}
-
-type Comment struct {
-	ID       string
-	Category string
-	Content  string
+// NewPRHandler creates a new PR handler
+func NewPRHandler(service services.PRService) *PRHandler {
+	return &PRHandler{
+		Service: service,
+	}
 }
 
 // GetPR handles GET requests to fetch a single PR by ID
-func GetPR(c *gin.Context) {
-
-	requestBody, err := parseFetchPullRequestBody(c)
+// GetPR handles the HTTP request to fetch pull request details from GitHub.
+// It parses the request body to extract the necessary information, calls the
+// service to retrieve the pull request details, and returns the details in the
+// response.
+//
+// @Summary Fetch pull request details
+// @Description Fetches pull request details from GitHub based on the provided request body.
+// @Tags pull requests
+// @Accept json
+// @Produce json
+// @Param request body FetchPullRequestBody true "Fetch Pull Request Body"
+// @Success 200 {object} gin.H{"message": string, "pr": interface{}}
+// @Failure 400 {object} gin.H{"error": string}
+// @Router /pullrequest [post]
+func (h *PRHandler) GetPR(c *gin.Context) {
+	prRequestBody, err := parseFetchPullRequestBody(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// Logic to fetch a PR by ID from the database or service
-	c.JSON(http.StatusOK, gin.H{"message": "PR details", "pr": &requestBody})
+
+	pr, err := h.Service.GetPRsFromGitHub(*prRequestBody)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "PR details", "pr": pr})
 }
 
-func parseFetchPullRequestBody(c *gin.Context) (req *PullRequestRequest, err error) {
-
-	body, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		log.Println("Error reading FetchPullRequest body")
-		return nil, err
-	}
-
-	err = json.Unmarshal(body, &req)
-	if err != nil {
-		log.Println("Error unmarshalling FetchPullRequest body")
-		return nil, err
-	}
-
+func parseFetchPullRequestBody(c *gin.Context) (*models.PullRequestRequest, error) {
+	req := &models.PullRequestRequest{}
+	req.OwnerID = c.Param("owner")
+	req.RepoID = c.Param("repo")
+	req.ID = c.Param("id")
 	if req.ID == "" || req.OwnerID == "" || req.RepoID == "" {
 		return nil, fmt.Errorf("missing field in FetchPullRequest body")
 	}
-
 	return req, nil
 }

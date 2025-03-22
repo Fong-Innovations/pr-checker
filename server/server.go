@@ -2,7 +2,9 @@ package router
 
 import (
 	config "ai-api/config"
+	"ai-api/handlers"
 	handler "ai-api/handlers" // Import the handler package
+	"ai-api/services"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -10,23 +12,34 @@ import (
 )
 
 type Server struct {
-	Config *config.Config
-	Router *gin.Engine
+	Config    *config.Config
+	PRHandler *handler.PRHandler
+	Router    *gin.Engine
 }
 
 // SetupRouter sets up all routes for the application
-func NewServer(cfg *config.Config) Server {
+func NewServer(cfg *config.Config, services *services.Services) Server {
 
 	logger := setupLogger()
+
 	r := gin.Default()
+
+	// create handlers
+	prHandler := handlers.NewPRHandler(services.PRService)
+
 	r.Use(ZlogMiddleware(logger))
 	r.SetTrustedProxies([]string{})
 
-	r = addRoutes(r)
-	return Server{
-		Config: cfg,
-		Router: r,
+	// Register routes
+	server := &Server{
+		Config:    cfg,
+		Router:    r,
+		PRHandler: prHandler,
 	}
+
+	server.routes()
+
+	return *server
 }
 
 func setupLogger() zerolog.Logger {
@@ -36,29 +49,21 @@ func setupLogger() zerolog.Logger {
 
 func ZlogMiddleware(logger zerolog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Add the logger to the context
 		c.Set("zlog", logger)
-		// logger.Info().Msg("Hello from zlog!")
-
-		// Proceed to the next middleware or handler
 		c.Next()
 	}
 }
 
-func addRoutes(r *gin.Engine) *gin.Engine {
+func (s *Server) routes() {
 
-	api := r.Group("/v1/api")
+	api := s.Router.Group("/v1/api")
 	{
-		// testing
-		api.GET("/hello", handler.HelloHandler)
-
 		// PULL REQUEST ROUTES
-		pr := api.Group("/pull-request")
+		pr := api.Group("/pr")
 		{
-			pr.GET("/:id", handler.GetPR)
-
+			pr.GET("/:owner/:repo/:id", s.PRHandler.GetPR)
 		}
 	}
 
-	return r
+	// return r
 }
