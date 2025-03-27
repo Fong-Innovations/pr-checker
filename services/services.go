@@ -6,12 +6,12 @@ import (
 )
 
 type Services struct {
-	PRService PRService
+	PRService *PRService
 }
 
 // NewServices creates a new Services instance
 func NewServices(cfg config.Config) *Services {
-	prService := &PRServiceImpl{
+	prService := &PRService{
 		httpClient: &http.Client{},
 		cfg:        cfg,
 	}

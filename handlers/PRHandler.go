@@ -4,6 +4,7 @@ import (
 	"ai-api/models"
 	"ai-api/services"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,11 +12,11 @@ import (
 
 // PRHandler represents the handler for handling PR-related requests
 type PRHandler struct {
-	Service services.PRService
+	Service *services.PRService
 }
 
 // NewPRHandler creates a new PR handler
-func NewPRHandler(service services.PRService) *PRHandler {
+func NewPRHandler(service *services.PRService) *PRHandler {
 	return &PRHandler{
 		Service: service,
 	}
@@ -36,20 +37,34 @@ func NewPRHandler(service services.PRService) *PRHandler {
 // @Success 200 {object} gin.H{"message": string, "pr": interface{}}
 // @Failure 400 {object} gin.H{"error": string}
 // @Router /pullrequest [post]
-func (h *PRHandler) GetPR(c *gin.Context) {
+func (h *PRHandler) AnalyzePR(c *gin.Context) {
+
+	// parse pr request data
 	prRequestBody, err := parseFetchPullRequestBody(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error parsing request body. error:": err.Error()})
 		return
 	}
 
-	pr, err := h.Service.GetPRsFromGitHub(*prRequestBody)
+	// fetch changes from github for requested pr
+	pr, err := h.Service.GetPRChangeFilesFromGitHub(*prRequestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error fetching pr changes. error:": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "PR details", "pr": pr})
+	// analyze the change files and generate a list of comments
+	comments, err := h.Service.GeneratePRComments(pr, prRequestBody.OwnerID, prRequestBody.RepoID, prRequestBody.ID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error generating comments. error: ": err.Error()})
+		return
+	}
+	log.Println(comments)
+
+	// post the comments to the pr
+
+	// return status
+	c.JSON(http.StatusOK, gin.H{"message": "PR details", "change_files": pr.Files, "comments": comments})
 }
 
 func parseFetchPullRequestBody(c *gin.Context) (*models.PullRequestRequest, error) {

@@ -2,71 +2,50 @@ package models
 
 import "time"
 
+type ChangeFiles struct {
+	Files []ChangeFile
+}
+
+type ChangeFile struct {
+	Additions    int    `json:"additions"`
+	Changes      int    `json:"changes"`
+	Deletions    int    `json:"deletions"`
+	Blob_url     string `json:"blob_url"`
+	Contents_url string `json:"contents_url"`
+	Filename     string `json:"filename"`
+	Patch        string `json:"patch"`
+	Raw_url      string `json:"raw_url"`
+	Sha          string `json:"sha"`
+	Status       string `json:"status"`
+}
+
+type PRComment struct {
+	Body     string `json:"body"`
+	CommitID string `json:"commit_id"`
+	Path     string `json:"path"`
+	Position int    `json:"position"`
+}
+
 type PullRequestRequest struct {
 	ID      string `json:"id"`
 	OwnerID string `json:"owner_id"`
 	RepoID  string `json:"repo_id"`
 }
 
-type PullRequestResponse struct {
-	PR PullRequest
-}
-
 type Comment struct {
-	ID       string
-	Category string
-	Content  string
+	Owner      string      `json:"owner"`
+	Repo       string      `json:"repo"`
+	PullNumber string      `json:"pull_number"`
+	Body       CommentBody `json:"body"`
 }
 
-type PullRequest struct {
-	URL                 string      `json:"url"`
-	ID                  int         `json:"id"`
-	NodeID              string      `json:"node_id"`
-	HTMLURL             string      `json:"html_url"`
-	DiffURL             string      `json:"diff_url"`
-	PatchURL            string      `json:"patch_url"`
-	IssueURL            string      `json:"issue_url"`
-	CommitsURL          string      `json:"commits_url"`
-	ReviewCommentsURL   string      `json:"review_comments_url"`
-	ReviewCommentURL    string      `json:"review_comment_url"`
-	CommentsURL         string      `json:"comments_url"`
-	StatusesURL         string      `json:"statuses_url"`
-	Number              int         `json:"number"`
-	State               string      `json:"state"`
-	Locked              bool        `json:"locked"`
-	Title               string      `json:"title"`
-	User                User        `json:"user"`
-	Body                string      `json:"body"`
-	Labels              []Label     `json:"labels"`
-	Milestone           Milestone   `json:"milestone"`
-	ActiveLockReason    string      `json:"active_lock_reason"`
-	CreatedAt           time.Time   `json:"created_at"`
-	UpdatedAt           time.Time   `json:"updated_at"`
-	ClosedAt            time.Time   `json:"closed_at"`
-	MergedAt            time.Time   `json:"merged_at"`
-	MergeCommitSHA      string      `json:"merge_commit_sha"`
-	Assignee            User        `json:"assignee"`
-	Assignees           []User      `json:"assignees"`
-	RequestedReviewers  []User      `json:"requested_reviewers"`
-	RequestedTeams      []Team      `json:"requested_teams"`
-	Head                Branch      `json:"head"`
-	Base                Branch      `json:"base"`
-	Links               Links       `json:"_links"`
-	AuthorAssociation   string      `json:"author_association"`
-	AutoMerge           interface{} `json:"auto_merge"`
-	Draft               bool        `json:"draft"`
-	Merged              bool        `json:"merged"`
-	Mergeable           bool        `json:"mergeable"`
-	Rebaseable          bool        `json:"rebaseable"`
-	MergeableState      string      `json:"mergeable_state"`
-	MergedBy            User        `json:"merged_by"`
-	Comments            int         `json:"comments"`
-	ReviewComments      int         `json:"review_comments"`
-	MaintainerCanModify bool        `json:"maintainer_can_modify"`
-	Commits             int         `json:"commits"`
-	Additions           int         `json:"additions"`
-	Deletions           int         `json:"deletions"`
-	ChangedFiles        int         `json:"changed_files"`
+type CommentBody struct {
+	Body        string `json:"body"`
+	CommitID    string `json:"commit_id"`
+	Path        string `json:"path"`
+	Line        int    `json:"line"`         // Required unless using subject_type:file
+	Side        string `json:"side"`         // LEFT OR RIGHT FOR SPLIT DIFF VIEW
+	SubjectType string `json:"subject_type"` // The level at which the comment is targeted. Can be one of: line, file
 }
 
 type User struct {

@@ -61,7 +61,7 @@ func (s *Server) routes() {
 		// PULL REQUEST ROUTES
 		pr := api.Group("/pr")
 		{
-			pr.GET("/:owner/:repo/:id", s.PRHandler.GetPR)
+			pr.GET("/:owner/:repo/:id", s.PRHandler.AnalyzePR)
 		}
 	}
 

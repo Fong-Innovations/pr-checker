@@ -5,6 +5,8 @@
 *.so
 *.dylib
 
+
+
 # Test binary, build output
 *.test
 *.out
@@ -38,3 +40,6 @@ go.mod
 
 # Environment variables
 .env
+
+# CUSTOM
+*tmp/
