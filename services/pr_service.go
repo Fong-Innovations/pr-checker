@@ -1,20 +1,13 @@
 package services
 
 import (
+	clients "ai-api/clients"
 	"ai-api/config"
 	"ai-api/models"
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 	"strings"
-)
-
-const (
-	githubFetchPRChangesURL = "https://api.github.com/repos/%s/%s/pulls/%s/files"
-	githubPostPRCommentURL  = "https://api.github.com/repos/%s/%s/pulls/%s/comments" // github treats prs as issues for comments!
 )
 
 // DiffEntry represents a single entry in the diff response from GitHub
@@ -34,52 +27,27 @@ type DiffEntry struct {
 
 // PRService is a concrete implementation of the PRService interface
 type PRService struct {
-	httpClient *http.Client
-	cfg        config.Config
+	githubClient clients.GithubClient
+	cfg          config.Config
 }
 
 // Responses include a maximum of 3000 files. The paginated response returns 30 files per page by default.
 // GetPRsFromGitHub is the implementation of the PRService interface method
 func (s *PRService) GetPRChangeFilesFromGitHub(prRequestBody models.PullRequestRequest) (*models.ChangeFiles, error) {
 	// Build GitHub API URL for fetching PRs
-	url := fmt.Sprintf(githubFetchPRChangesURL, prRequestBody.OwnerID, prRequestBody.RepoID, prRequestBody.ID)
-
-	// Create a new HTTP request
-	req, err := http.NewRequest("GET", url, nil)
+	changeFiles, err := s.githubClient.FetchPullRequestChanges(prRequestBody)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, fmt.Errorf("failed to fetch PR changes: %w", err)
+	}
+	if len(changeFiles.Files) == 0 {
+		return nil, fmt.Errorf("no files found in the PR")
 	}
 
-	// Add headers to the request if needed
-	req.Header.Set("Accept", "application/vnd.github.full+json")
-
-	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	req.Header.Set("Authorization", "Bearer "+s.cfg.GithubToken)
-
-	// Send the HTTP request
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch PRs from GitHub: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Check if response status is OK
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received non-OK response from GitHub: %s", resp.Status)
-	}
-
-	// Parse the response body into a Go struct
-	var prResponse models.ChangeFiles
+	// Filter out only .go files
 	var result = models.ChangeFiles{
 		Files: []models.ChangeFile{},
 	}
-	err = json.NewDecoder(resp.Body).Decode(&prResponse.Files)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode PR response body: %w", err)
-	}
-
-	// RETURN ONLY .go FILES
-	for _, file := range prResponse.Files {
+	for _, file := range changeFiles.Files {
 		if strings.HasSuffix(file.Filename, ".go") {
 			result.Files = append(result.Files, file)
 		}
@@ -92,9 +60,10 @@ func (s *PRService) GetPRChangeFilesFromGitHub(prRequestBody models.PullRequestR
 func (s *PRService) GeneratePRComments(changeFiles *models.ChangeFiles, repoOwner, repoName, prNumber string) (results []models.CommentBody, err error) {
 
 	// Placeholder for generating comments
-	url := fmt.Sprintf(githubPostPRCommentURL, repoOwner, repoName, prNumber)
 	for _, file := range changeFiles.Files {
+
 		if file.Filename == "config/config.go" {
+
 			// get the sha from the contents url
 			headCommitSHA, err := parseRefForHeadCommitSHA(file.Contents_url)
 			if err != nil {
@@ -105,39 +74,21 @@ func (s *PRService) GeneratePRComments(changeFiles *models.ChangeFiles, repoOwne
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate comment body: %w", err)
 			}
-
-			prReviewCommentRequestBody := models.CommentBody{
-				Body:     commentBody,
-				CommitID: headCommitSHA,
-				Path:     file.Filename,
-				Position: 1,
+			generateCommentsRequest := models.GeneratePRCommentParams{
+				RepoOwner:   repoOwner,
+				RepoName:    repoName,
+				PRNumber:    prNumber,
+				CommentBody: commentBody,
+				CommitSha:   headCommitSHA,
+				FileName:    file.Filename,
+				Position:    1,
 			}
-			jsonData, err := json.Marshal(prReviewCommentRequestBody)
 
+			resp, err := s.githubClient.PostPullRequestCommentOnLine(generateCommentsRequest)
 			if err != nil {
-				return nil, fmt.Errorf("failed to marshal PR Comment body: %w", err)
+				return nil, fmt.Errorf("failed to post PR Comment: %w", err)
 			}
-
-			req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-			if err != nil {
-				return nil, fmt.Errorf("error making PR Comment request: %w", err)
-			}
-			req.Header.Set("Authorization", "token "+s.cfg.GithubToken)
-			req.Header.Set("Accept", "application/vnd.github+json")
-			req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-			log.Print(req)
-			resp, err := s.httpClient.Do(req)
-			if err != nil {
-				return nil, err
-			}
-			defer resp.Body.Close()
-
-			if resp.StatusCode != http.StatusCreated {
-				return nil, fmt.Errorf(resp.Status)
-			}
-
-			results = append(results, prReviewCommentRequestBody)
-
+			log.Println("RESPONSE: ", resp)
 			fmt.Println("Comment posted for: ", file.Filename)
 		}
 	}

@@ -2,6 +2,16 @@ package models
 
 import "time"
 
+type GeneratePRCommentParams struct {
+	RepoOwner   string
+	RepoName    string
+	PRNumber    string
+	CommentBody string
+	CommitSha   string
+	FileName    string
+	Position    int
+}
+
 type ChangeFiles struct {
 	Files []ChangeFile
 }

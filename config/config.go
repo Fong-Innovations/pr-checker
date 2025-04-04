@@ -11,8 +11,10 @@ import (
 
 // Config struct to hold application configuration
 type Config struct {
-	APIKey      string `koanf:"api_key"`
-	GithubToken string `koanf:"github_token"`
+	APIKey           string `koanf:"api_key"`
+	GithubToken      string `koanf:"github_token"`
+	LLMServiceURL    string `koanf:"llm_service_url"`
+	LLMServiceAPIKey string `koanf:"llm_service_api_key"`
 }
 
 var k = koanf.New(".")
@@ -25,9 +27,9 @@ func LoadConfig(envFile string) *Config {
 	}
 
 	// Load environment variables with the prefix "AICHECKER_"
-	err := k.Load(env.Provider("AICHECKER_", ".", func(s string) string {
+	err := k.Load(env.Provider("AI_CHECKER_", ".", func(s string) string {
 		// Transform environment variable names to match struct field names
-		return strings.ToLower(strings.TrimPrefix(s, "AICHECKER_"))
+		return strings.ToLower(strings.TrimPrefix(s, "AI_CHECKER_"))
 	}), nil)
 	if err != nil {
 		log.Fatalf("error loading environment variables: %v", err)
