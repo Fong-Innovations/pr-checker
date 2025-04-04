@@ -33,19 +33,17 @@ type PullRequestRequest struct {
 }
 
 type Comment struct {
-	Owner      string      `json:"owner"`
-	Repo       string      `json:"repo"`
-	PullNumber string      `json:"pull_number"`
-	Body       CommentBody `json:"body"`
+	// Owner      string      `json:"owner"`
+	// Repo       string      `json:"repo"`
+	// PullNumber string      `json:"pull_number"`
+	Body CommentBody `json:"body"`
 }
 
 type CommentBody struct {
-	Body        string `json:"body"`
-	CommitID    string `json:"commit_id"`
-	Path        string `json:"path"`
-	Line        int    `json:"line"`         // Required unless using subject_type:file
-	Side        string `json:"side"`         // LEFT OR RIGHT FOR SPLIT DIFF VIEW
-	SubjectType string `json:"subject_type"` // The level at which the comment is targeted. Can be one of: line, file
+	Body     string `json:"body"`
+	CommitID string `json:"commit_id"`
+	Path     string `json:"path"`
+	Position int    `json:"position"`
 }
 
 type User struct {

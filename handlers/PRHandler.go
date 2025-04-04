@@ -15,6 +15,11 @@ type PRHandler struct {
 	Service *services.PRService
 }
 
+type PRHandlerInterface interface {
+	GetPR(c *gin.Context)
+	AnalyzePR(c *gin.Context)
+}
+
 // NewPRHandler creates a new PR handler
 func NewPRHandler(service *services.PRService) *PRHandler {
 	return &PRHandler{
@@ -46,17 +51,19 @@ func (h *PRHandler) AnalyzePR(c *gin.Context) {
 		return
 	}
 
+	// get pr head commit sha
+
 	// fetch changes from github for requested pr
 	pr, err := h.Service.GetPRChangeFilesFromGitHub(*prRequestBody)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error fetching pr changes. error:": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "error fetching pr changes", "error:": err.Error()})
 		return
 	}
 
 	// analyze the change files and generate a list of comments
 	comments, err := h.Service.GeneratePRComments(pr, prRequestBody.OwnerID, prRequestBody.RepoID, prRequestBody.ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error generating comments. error: ": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "error posting PR comments", "error: ": err.Error()})
 		return
 	}
 	log.Println(comments)
@@ -64,7 +71,7 @@ func (h *PRHandler) AnalyzePR(c *gin.Context) {
 	// post the comments to the pr
 
 	// return status
-	c.JSON(http.StatusOK, gin.H{"message": "PR details", "change_files": pr.Files, "comments": comments})
+	c.JSON(http.StatusOK, gin.H{"message": "PR details", "change_files": pr})
 }
 
 func parseFetchPullRequestBody(c *gin.Context) (*models.PullRequestRequest, error) {

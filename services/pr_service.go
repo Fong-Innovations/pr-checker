@@ -8,12 +8,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
 const (
 	githubFetchPRChangesURL = "https://api.github.com/repos/%s/%s/pulls/%s/files"
-	githubPostPRCommentURL  = "https://api.github.com/repos/%s/%s/pulls/%s/comments"
+	githubPostPRCommentURL  = "https://api.github.com/repos/%s/%s/pulls/%s/comments" // github treats prs as issues for comments!
 )
 
 // DiffEntry represents a single entry in the diff response from GitHub
@@ -44,7 +45,6 @@ func (s *PRService) GetPRChangeFilesFromGitHub(prRequestBody models.PullRequestR
 	url := fmt.Sprintf(githubFetchPRChangesURL, prRequestBody.OwnerID, prRequestBody.RepoID, prRequestBody.ID)
 
 	// Create a new HTTP request
-	log.Println(url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
@@ -88,49 +88,81 @@ func (s *PRService) GetPRChangeFilesFromGitHub(prRequestBody models.PullRequestR
 	return &result, nil
 }
 
-func (s *PRService) GeneratePRComments(changeFiles *models.ChangeFiles, repoOwner, repoName, prNumber string) (results []models.Comment, err error) {
+// https://docs.github.com/en/rest/pulls/comments?apiVersion=2022-11-28#create-a-review-comment-for-a-pull-request
+func (s *PRService) GeneratePRComments(changeFiles *models.ChangeFiles, repoOwner, repoName, prNumber string) (results []models.CommentBody, err error) {
+
 	// Placeholder for generating comments
 	url := fmt.Sprintf(githubPostPRCommentURL, repoOwner, repoName, prNumber)
 	for _, file := range changeFiles.Files {
-		commentBody := models.Comment{
-			Owner:      repoOwner,
-			Repo:       repoName,
-			PullNumber: prNumber,
-			Body: models.CommentBody{
-				Body:        "This is a test comment",
-				CommitID:    file.Sha,
-				Path:        file.Filename,
-				Line:        1,
-				Side:        "RIGHT",
-				SubjectType: "line",
-			},
+		if file.Filename == "config/config.go" {
+			// get the sha from the contents url
+			headCommitSHA, err := parseRefForHeadCommitSHA(file.Contents_url)
+			if err != nil {
+				return nil, fmt.Errorf("failed to extra head commit sha: %w", err)
+			}
+
+			commentBody, err := generateCommentBody(file.Patch)
+			if err != nil {
+				return nil, fmt.Errorf("failed to generate comment body: %w", err)
+			}
+
+			prReviewCommentRequestBody := models.CommentBody{
+				Body:     commentBody,
+				CommitID: headCommitSHA,
+				Path:     file.Filename,
+				Position: 1,
+			}
+			jsonData, err := json.Marshal(prReviewCommentRequestBody)
+
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal PR Comment body: %w", err)
+			}
+
+			req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+			if err != nil {
+				return nil, fmt.Errorf("error making PR Comment request: %w", err)
+			}
+			req.Header.Set("Authorization", "token "+s.cfg.GithubToken)
+			req.Header.Set("Accept", "application/vnd.github+json")
+			req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+			log.Print(req)
+			resp, err := s.httpClient.Do(req)
+			if err != nil {
+				return nil, err
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusCreated {
+				return nil, fmt.Errorf(resp.Status)
+			}
+
+			results = append(results, prReviewCommentRequestBody)
+
+			fmt.Println("Comment posted for: ", file.Filename)
 		}
-
-		jsonData, err := json.Marshal(commentBody)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal PR Comment body: %w", err)
-		}
-
-		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-		if err != nil {
-			return nil, fmt.Errorf("error making PR Comment request: %w", err)
-		}
-		req.Header.Set("Authorization", "token "+s.cfg.GithubToken)
-		req.Header.Set("Content-Type", "application/json")
-
-		resp, err := s.httpClient.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusCreated {
-			return nil, fmt.Errorf("posting comment received non-OK response from GitHub: %s", resp.Status)
-		}
-
-		results = append(results, commentBody)
-
-		fmt.Println("Comment posted for: ", file.Filename)
 	}
 	return results, nil
+}
+
+// parseRefForHeadCommitSHA parses the rawURL string to get the head commit SHA for a PR
+func parseRefForHeadCommitSHA(rawURL string) (string, error) {
+	// Parse the URL
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract query parameters
+	queryParams := parsedURL.Query()
+
+	// Get the value of the 'ref' parameter
+	sha := queryParams.Get("ref")
+	return sha, nil
+}
+
+func generateCommentBody(changePatch string) (string, error) {
+	// Placeholder for generating a comment body
+	log.Println(changePatch)
+	commentBody := "This is a sample comment body from the API"
+	return commentBody, nil
 }
