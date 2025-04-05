@@ -57,10 +57,24 @@ func (s *PRService) GetPRChangeFilesFromGitHub(ctx context.Context, prRequestBod
 	return &result, nil
 }
 
-// https://docs.github.com/en/rest/pulls/comments?apiVersion=2022-11-28#create-a-review-comment-for-a-pull-request
-func (s *PRService) ReviewChanges(ctx context.Context, changeFiles *models.ChangeFiles, repoOwner, repoName, prNumber string) (filesCommented []string, err error) {
-
-	// Placeholder for generating comments
+// ReviewChanges reviews the changes in a pull request by analyzing the provided change files
+// and generating review comments for each file.
+//
+// Parameters:
+//   - ctx: The context for managing request deadlines and cancellations.
+//   - changeFiles: A pointer to a models.ChangeFiles object containing the list of changed files.
+//   - repoOwner: The owner of the repository where the pull request resides.
+//   - repoName: The name of the repository where the pull request resides.
+//   - prNumber: The pull request number.
+//
+// Returns:
+//   - reviews: A slice of models.GeneratePRCommentParams containing the generated review comments.
+//   - err: An error if any issue occurs during the review process.
+//
+// The function iterates over the list of changed files, extracts the head commit SHA from the file's
+// contents URL, and uses an LLM client to generate a review comment body based on the file's patch.
+// It then constructs a GeneratePRCommentParams object for each file and appends it to the reviews slice.
+func (s *PRService) ReviewChanges(ctx context.Context, changeFiles *models.ChangeFiles, repoOwner, repoName, prNumber string) (reviews []models.GeneratePRCommentParams, err error) {
 	for _, file := range changeFiles.Files {
 		// get the sha from the contents url (find a better way to do this?)
 		headCommitSHA, err := parseRefForHeadCommitSHA(file.Contents_url)
@@ -83,16 +97,34 @@ func (s *PRService) ReviewChanges(ctx context.Context, changeFiles *models.Chang
 			Position:    1,
 		}
 
-		resp, err := s.githubClient.PostPullRequestCommentOnLine(generateCommentsRequest)
-		if err != nil {
-			// Handle the error
-			fmt.Println("Error posting PR comment:", err, resp)
-			return nil, fmt.Errorf("failed to post PR Comment. error: %w, response: %v", err, resp)
-		}
-		fmt.Println("Comment posted for: ", file.Filename)
-		filesCommented = append(filesCommented, file.Filename)
+		reviews = append(reviews, generateCommentsRequest)
 	}
-	return filesCommented, nil
+	return reviews, nil
+}
+
+func (s *PRService) PostPRComments(ctx context.Context, codeReviews []models.GeneratePRCommentParams) (status string, err error) {
+	var failedComments []models.GeneratePRCommentParams
+
+	for _, codeReview := range codeReviews {
+		resp, err := s.githubClient.PostPullRequestCommentOnLine(codeReview)
+		if err != nil {
+			// Log the failed comment and continue with the next one
+			fmt.Printf("failed to post comment for file %s: %v\n", codeReview.FileName, err)
+			failedComments = append(failedComments, codeReview)
+			continue
+		}
+		fmt.Println("Comment posted for: ", codeReview.FileName)
+		status = resp[0].Body
+	}
+
+	if len(failedComments) > 0 {
+		return "", fmt.Errorf("some comments failed to post: %v", failedComments)
+	}
+	// If all comments were posted successfully, return the status
+	if status == "" {
+		return "", fmt.Errorf("no comments posted")
+	}
+	return status, nil
 }
 
 // parseRefForHeadCommitSHA parses the rawURL string to get the head commit SHA for a PR

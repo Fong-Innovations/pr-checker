@@ -58,14 +58,20 @@ func (h *PRHandler) AnalyzePR(ctx *gin.Context) {
 	}
 
 	// analyze the change files and generate a list of comments
-	filesCommented, err := h.Service.ReviewChanges(ctx, pr, prRequestBody.OwnerID, prRequestBody.RepoID, prRequestBody.ID)
+	codeReviews, err := h.Service.ReviewChanges(ctx, pr, prRequestBody.OwnerID, prRequestBody.RepoID, prRequestBody.ID)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "error posting PR comments", "error: ": err.Error()})
+		return
+	}
+
+	status, err := h.Service.PostPRComments(ctx, codeReviews)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "error posting PR comments", "error: ": err.Error()})
 		return
 	}
 
 	// return status
-	ctx.JSON(http.StatusOK, gin.H{"message": "PR Analyzed", "commented_files_count": len(filesCommented), "files": filesCommented})
+	ctx.JSON(http.StatusOK, gin.H{"message": "PR Analyzed", "commented_files_count": len(codeReviews), "status": status})
 }
 
 func parseFetchPullRequestBody(c *gin.Context) (*models.PullRequestRequest, error) {
