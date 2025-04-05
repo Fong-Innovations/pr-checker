@@ -14,7 +14,8 @@ func main() {
 	// Load configuration from the .env file
 	cfg, err := config.LoadConfig(".env")
 	if err != nil {
-		log.Errorf("failed to load config: " + err.Error())
+		// Handle error
+		log.Fatal(err)
 		return
 	}
 	services := services.NewServices(*cfg)
