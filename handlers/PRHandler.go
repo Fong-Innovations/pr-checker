@@ -50,8 +50,6 @@ func (h *PRHandler) AnalyzePR(ctx *gin.Context) {
 		return
 	}
 
-	// get pr head commit sha
-
 	// fetch changes from github for requested pr
 	pr, err := h.Service.GetPRChangeFilesFromGitHub(ctx, *prRequestBody)
 	if err != nil {
@@ -60,7 +58,7 @@ func (h *PRHandler) AnalyzePR(ctx *gin.Context) {
 	}
 
 	// analyze the change files and generate a list of comments
-	filesCommented, err := h.Service.GeneratePRComments(ctx, pr, prRequestBody.OwnerID, prRequestBody.RepoID, prRequestBody.ID)
+	filesCommented, err := h.Service.ReviewChanges(ctx, pr, prRequestBody.OwnerID, prRequestBody.RepoID, prRequestBody.ID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "error posting PR comments", "error: ": err.Error()})
 		return
