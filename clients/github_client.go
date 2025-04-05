@@ -16,9 +16,11 @@ type GithubClient struct {
 }
 
 type GithubClientInterface interface {
+	FetchPullRequestChanges(prRequestBody models.PullRequestRequest) (*models.ChangeFiles, error)
+	PostPullRequestCommentOnLine(params models.GeneratePRCommentParams) (results []models.CommentBody, err error)
 }
 
-func NewGithubClient(apiKey, baseUrl string, httpClient *http.Client) *GithubClient {
+func NewGithubClient(httpClient *http.Client, apiKey, baseUrl string) *GithubClient {
 	return &GithubClient{
 		HttpClient: httpClient,
 		APIKey:     apiKey,

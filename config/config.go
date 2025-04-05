@@ -11,10 +11,13 @@ import (
 
 // Config struct to hold application configuration
 type Config struct {
-	APIKey           string `koanf:"api_key"`
-	GithubToken      string `koanf:"github_token"`
-	LLMServiceURL    string `koanf:"llm_service_url"`
-	LLMServiceAPIKey string `koanf:"llm_service_api_key"`
+	APIKey                string `koanf:"api_key"`
+	GithubToken           string `koanf:"github_token"`
+	GithubBaseURL         string `koanf:"github_base_url"`
+	LLM_ServiceURL        string `koanf:"llm_base_url"`
+	LLM_ServiceAPIKey     string `koanf:"llm_api_key"`
+	LLM_MODEL             string `koanf:"llm_model"`
+	LLM_ANALYZE_PR_PROMPT string `koanf:"llm_analyze_pr_prompt"`
 }
 
 var k = koanf.New(".")
@@ -23,7 +26,7 @@ var k = koanf.New(".")
 func LoadConfig(envFile string) *Config {
 	// Load the .env file into environment variables
 	if err := godotenv.Load(envFile); err != nil {
-		log.Printf("No .env file found or failed to load: %v", err)
+		log.Fatalf("No .env file found or failed to load: %v", err)
 	}
 
 	// Load environment variables with the prefix "AICHECKER_"
@@ -37,8 +40,7 @@ func LoadConfig(envFile string) *Config {
 	// Create and populate a Config struct
 	var cfg Config
 	if err := k.Unmarshal("", &cfg); err != nil {
-		log.Printf("error unmarshaling config: %v", err)
+		log.Fatalf("error unmarshaling config: %v", err)
 	}
-
 	return &cfg
 }

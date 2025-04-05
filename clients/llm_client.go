@@ -4,21 +4,21 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"net/http"
-	"os"
 )
 
 // Interface for mocking and extensibility
-type LLMClient interface {
+type AIClientInterface interface {
 	GenerateReviewComment(diff string) (string, error)
 }
 
 // Concrete implementation
-type OpenAIClient struct {
-	APIKey string
-	Model  string
-	URL    string
+type AIClient struct {
+	HttpClient *http.Client
+	APIKey     string
+	Model      string
+	URL        string
 }
 
 // Request/Response format (simplified for OpenAI Chat API, can adjust per your LLM)
@@ -32,23 +32,23 @@ type chatMessage struct {
 	Content string `json:"content"`
 }
 
-type openAIResponse struct {
+type aiResponse struct {
 	Choices []struct {
 		Message chatMessage `json:"message"`
 	} `json:"choices"`
 }
 
 // Constructor
-func NewOpenAIClient() *OpenAIClient {
-	return &OpenAIClient{
-		APIKey: os.Getenv("OPENAI_API_KEY"),
-		Model:  "gpt-4", // or gpt-3.5-turbo
-		URL:    "https://api.openai.com/v1/chat/completions",
+func NewAIClient(httpClient *http.Client, key, model, url string) *AIClient {
+	return &AIClient{
+		APIKey: key,
+		Model:  model, // or gpt-3.5-turbo
+		URL:    url,
 	}
 }
 
 // Implementation of GenerateReviewComment
-func (c *OpenAIClient) GenerateReviewComment(diff string) (string, error) {
+func (c *AIClient) GenerateReviewComment(diff string) (string, error) {
 	reqBody := openAIRequest{
 		Model: c.Model,
 		Messages: []chatMessage{
@@ -59,32 +59,32 @@ func (c *OpenAIClient) GenerateReviewComment(diff string) (string, error) {
 
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
+		log.Println("error marshalling request body:", err)
 		return "", err
 	}
 
 	req, err := http.NewRequest("POST", c.URL, bytes.NewBuffer(jsonData))
 	if err != nil {
+		log.Println("error creating request for LLM comments:", err)
 		return "", err
 	}
 
 	req.Header.Set("Authorization", "Bearer "+c.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := ioutil.ReadAll(resp.Body)
-		return "", fmt.Errorf("OpenAI API error: %s", string(bodyBytes))
+		return "", fmt.Errorf("OpenAI API error: %s", resp.Status)
 	}
 
-	var res openAIResponse
+	var res aiResponse
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to decode open ai response body: %w", err)
 	}
 
 	if len(res.Choices) == 0 {
