@@ -3,7 +3,7 @@
 package config
 
 import (
-	"log"
+	"fmt"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -21,13 +21,12 @@ type Config struct {
 	LLMAnalyzePrompt string `koanf:"llm_analyze_pr_prompt"`
 }
 
-// LoadConfig reads configuration from a .env file and environment variables
+// LoadConfig reads configuration from a .env file and environment variables.
 func LoadConfig(envFile string) (*Config, error) {
 	// Load the .env file into environment variables
 	err := godotenv.Load(envFile)
 	if err != nil {
-		log.Printf("failed to load env file: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to load env file: %w", err)
 	}
 
 	var k = koanf.New(".")
@@ -38,14 +37,12 @@ func LoadConfig(envFile string) (*Config, error) {
 		return strings.ToLower(strings.TrimPrefix(s, "AI_CHECKER_"))
 	}), nil)
 	if err != nil {
-		log.Printf("failed to load environment variables: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to load environment variables: %w", err)
 	}
 	// Create and populate a Config struct
 	var cfg Config
 	if err := k.Unmarshal("", &cfg); err != nil {
-		log.Printf("error unmarshaling config: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("error unmarshaling config: %v", err)
 	}
 	return &cfg, nil
 }
