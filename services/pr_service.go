@@ -6,7 +6,6 @@ import (
 	"ai-api/models"
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 	"strings"
 )
@@ -86,9 +85,10 @@ func (s *PRService) ReviewChanges(ctx context.Context, changeFiles *models.Chang
 
 		resp, err := s.githubClient.PostPullRequestCommentOnLine(generateCommentsRequest)
 		if err != nil {
-			return nil, fmt.Errorf("failed to post PR Comment: %w", err)
+			// Handle the error
+			fmt.Println("Error posting PR comment:", err, resp)
+			return nil, fmt.Errorf("failed to post PR Comment. error: %w, response: %v", err, resp)
 		}
-		log.Println("RESPONSE: ", resp)
 		fmt.Println("Comment posted for: ", file.Filename)
 		filesCommented = append(filesCommented, file.Filename)
 	}
