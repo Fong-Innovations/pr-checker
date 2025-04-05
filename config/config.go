@@ -1,5 +1,7 @@
 // File: config/config.go
-// Loads config variables from env file
+// Loads config variables from env file and environment variables
+// and unmarshals them into a Config struct
+// using koanf and godotenv.
 package config
 
 import (
@@ -31,7 +33,7 @@ func LoadConfig(envFile string) (*Config, error) {
 
 	var k = koanf.New(".")
 
-	// Load environment variables with the prefix "AICHECKER_"
+	// Load environment variables with the prefix "AICHECKER_".
 	err = k.Load(env.Provider("AI_CHECKER_", ".", func(s string) string {
 		// Transform environment variable names to match struct field names
 		return strings.ToLower(strings.TrimPrefix(s, "AI_CHECKER_"))
@@ -39,7 +41,7 @@ func LoadConfig(envFile string) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load environment variables: %w", err)
 	}
-	// Create and populate a Config struct
+	// Create and populate a Config struct.
 	var cfg Config
 	if err := k.Unmarshal("", &cfg); err != nil {
 		return nil, fmt.Errorf("error unmarshaling config: %v", err)
