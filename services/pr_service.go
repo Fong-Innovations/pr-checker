@@ -73,7 +73,7 @@ func (s *PRService) GeneratePRComments(ctx context.Context, changeFiles *models.
 			}
 
 			// Generate the comment body using the LLM client
-			commentBody, err := s.llmClient.GenerateReviewComment(ctx, file.Patch, s.cfg.LLM_ANALYZE_PR_PROMPT)
+			commentBody, err := s.llmClient.GenerateReviewComment(ctx, file.Patch, s.cfg.LLMAnalyzePrompt)
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate comment body: %w", err)
 			}

@@ -18,7 +18,7 @@ func NewServices(cfg config.Config) *Services {
 		Timeout: 60 * time.Second,
 	}
 	githubClient := clients.NewGithubClient(httpClient, cfg.GithubToken, cfg.GithubBaseURL)
-	openFGAClient := clients.NewOpenFGAClient(httpClient, cfg.LLM_ServiceAPIKey, cfg.LLM_ServiceURL)
+	openFGAClient := clients.NewOpenFGAClient(httpClient, cfg.LLMServiceAPIKey, cfg.LLMServiceURL)
 
 	prService := &PRService{
 		githubClient: *githubClient,
