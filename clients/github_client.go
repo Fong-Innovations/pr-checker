@@ -90,12 +90,12 @@ func (g *GithubClient) PostPullRequestCommentOnLine(params models.GeneratePRComm
 
 	resp, err := g.HttpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error making PR Comment request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf(resp.Status)
+		return nil, fmt.Errorf("error posting PR comment: %s", resp.Status)
 	}
 
 	results = append(results, prReviewCommentRequestBody)

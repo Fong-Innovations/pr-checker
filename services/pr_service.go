@@ -132,7 +132,7 @@ func parseRefForHeadCommitSHA(rawURL string) (string, error) {
 	// Parse the URL
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to parse URL: %w", err)
 	}
 
 	// Extract query parameters

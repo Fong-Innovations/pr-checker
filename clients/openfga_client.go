@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -74,13 +73,12 @@ func NewOpenFGAClient(httpClient *http.Client, key, url string) *OpenFGAClient {
 		option.WithHTTPClient(httpClient),
 	)
 	// Load the style guide chunks from the HTML file
+	log.Println("loading style guide embeddings")
 	chunks, err := parseStyleGuideChunks("./clients/style_guides/go_style_guide.html")
 	if err != nil {
 		log.Println("error parsing style guide chunks:", err)
 		return nil
 	}
-
-	log.Println("fetching emmbeddings")
 
 	// Fetch embeddings for the style guide chunks
 	embeddings, err := fetchStyleGuideEmbeddings(chunks, &client)
@@ -112,8 +110,7 @@ func (o *OpenFGAClient) GenerateReviewComment(ctx context.Context, codeDiff, pro
 
 	topChunks, err := FindRelevantChunks(ctx, o.Client, codeDiff, o.styleGuideChunks, o.styleGuideEmbeddings)
 	if err != nil {
-		log.Println("error finding relevant chunks:", err)
-		return "", err
+		return "", fmt.Errorf("error finding relevant chunks: %w", err)
 	}
 	prompt := buildReviewPrompt(topChunks, promptTemplate, codeDiff)
 
@@ -124,8 +121,7 @@ func (o *OpenFGAClient) GenerateReviewComment(ctx context.Context, codeDiff, pro
 		Model: openai.ChatModelGPT4o,
 	})
 	if err != nil {
-		log.Println("error generating review comment:", err)
-		return "", err
+		return "", fmt.Errorf("error generating review comment: %w", err)
 	}
 	return chatCompletion.Choices[0].Message.Content, nil
 }
@@ -143,7 +139,7 @@ func (o *OpenFGAClient) GenerateReviewComment(ctx context.Context, codeDiff, pro
 func parseStyleGuide(html string) ([]string, error) {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error parsing HTML style guide: %w", err)
 	}
 
 	var chunks []string
@@ -180,11 +176,11 @@ func EmbedText(ctx context.Context, client *openai.Client, input string) ([]floa
 
 	resp, err := client.Embeddings.New(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error generating embedding: %w", err)
 	}
 
 	if len(resp.Data) == 0 {
-		return nil, errors.New("no embeddings returned")
+		return nil, fmt.Errorf("no embeddings returned")
 	}
 
 	return resp.Data[0].Embedding, nil
@@ -238,7 +234,7 @@ func CosineSimilarity(a, b []float64) float64 {
 func FindRelevantChunks(ctx context.Context, client *openai.Client, userCode string, guideChunks []string, guideEmbeds [][]float64) ([]string, error) {
 	codeEmbed, err := EmbedText(ctx, client, userCode)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error generating embedding for user code: %w", err)
 	}
 
 	var scored []ScoredChunk
