@@ -13,7 +13,6 @@ import (
 
 // Config struct to hold application configuration
 type Config struct {
-	APIKey           string `koanf:"api_key"`
 	GithubToken      string `koanf:"github_token"`
 	GithubBaseURL    string `koanf:"github_base_url"`
 	LLMServiceURL    string `koanf:"llm_base_url"`
