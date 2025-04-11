@@ -1,43 +1,43 @@
-on:
-  push:
-    branches:
-      - main # Trigger on pushes to the main branch
-  pull_request:
-    branches:
-      - main # Trigger on pull requests to the main branch
+# on:
+#   push:
+#     branches:
+#       - main # Trigger on pushes to the main branch
+#   pull_request:
+#     branches:
+#       - main # Trigger on pull requests to the main branch
 
-jobs:
-  build:
-    runs-on: ubuntu-latest # Use the latest Ubuntu image to run the workflow
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest # Use the latest Ubuntu image to run the workflow
 
-    steps:
-      # Step 1: Checkout code from the repository
-      - name: Checkout code
-        uses: actions/checkout@v2
+#     steps:
+#       # Step 1: Checkout code from the repository
+#       - name: Checkout code
+#         uses: actions/checkout@v2
 
-      # Step 2: Set up Go environment
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: "1.22" # You can change this to the Go version you're using
+#       # Step 2: Set up Go environment
+#       - name: Set up Go
+#         uses: actions/setup-go@v2
+#         with:
+#           go-version: "1.22" # You can change this to the Go version you're using
 
-      # Step 3: Cache Go dependencies (optional but recommended)
-      - name: Cache Go modules
-        uses: actions/cache@v2
-        with:
-          path: /tmp/go-cache
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+#       # Step 3: Cache Go dependencies (optional but recommended)
+#       - name: Cache Go modules
+#         uses: actions/cache@v2
+#         with:
+#           path: /tmp/go-cache
+#           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+#           restore-keys: |
+#             ${{ runner.os }}-go-
 
-      # Step 4: Install dependencies and run tests
-      - name: Install dependencies and run tests
-        run: |
-          go mod tidy
-          go test -v ./...
+#       # Step 4: Install dependencies and run tests
+#       - name: Install dependencies and run tests
+#         run: |
+#           go mod tidy
+#           go test -v ./...
 
-      # Step 5: Build the application (optional)
-      - name: Build application
-        run: go build -o main .
+#       # Step 5: Build the application (optional)
+#       - name: Build application
+#         run: go build -o main .
 
-      # Optional: Add more steps to deploy or notify
+#       # Optional: Add more steps to deploy or notify
