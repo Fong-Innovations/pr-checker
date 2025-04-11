@@ -1,0 +1,7 @@
+with-expecter: True
+packages:
+  github.com/org/repo:
+    handlers:
+      PRHandler:
+        package: github.com/org/repo/handler
+        type: PRHandler

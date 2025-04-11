@@ -1,13 +1,26 @@
 package main
 
 import (
-	router "ai-api/routers" // Import the router package
+	"ai-api/config"
+	router "ai-api/server"
+	"ai-api/services"
+
+	"github.com/gofiber/fiber/v2/log"
 )
 
 func main() {
-	// Setup the router from the external package
-	r := router.SetupRouter()
 
-	// Start the Gin server on port 8080
-	r.Run(":8080")
+	// Setup the router from the external package
+	// Load configuration from the .env file
+	cfg, err := config.LoadConfig(".env")
+	if err != nil {
+		// Handle error
+		log.Fatal(err)
+		return
+	}
+	services := services.NewServices(*cfg)
+	server := router.NewServer(cfg, services)
+
+	server.Router.Run("localhost:8080")
+
 }
