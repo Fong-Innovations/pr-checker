@@ -1,9 +1,9 @@
 package main
 
 import (
-	"ai-api/config"
-	router "ai-api/server"
-	"ai-api/services"
+	"pr-checker/config"
+	router "pr-checker/server"
+	"pr-checker/services"
 
 	"github.com/gofiber/fiber/v2/log"
 )

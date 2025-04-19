@@ -1,9 +1,9 @@
 package services
 
 import (
-	clients "ai-api/clients"
-	"ai-api/config"
 	"net/http"
+	clients "pr-checker/clients"
+	"pr-checker/config"
 	"time"
 )
 

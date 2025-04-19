@@ -87,7 +87,7 @@ func NewOpenFGAClient(httpClient *http.Client, key, url string) *OpenFGAClient {
 		return nil
 	}
 
-	log.Println("creating client")
+	log.Println("creating openfga client")
 	return &OpenFGAClient{
 		Client:               &client,
 		styleGuideChunks:     chunks,

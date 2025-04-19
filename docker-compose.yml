@@ -1,6 +1,6 @@
 version: "3"
 services:
-  ai-api:
+  pr-checker:
     build:
       dockerfile: Dockerfile
       context: ./

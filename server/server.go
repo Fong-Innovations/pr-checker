@@ -1,11 +1,11 @@
 package router
 
 import (
-	config "ai-api/config"
-	"ai-api/handlers"
-	handler "ai-api/handlers" // Import the handler package
-	"ai-api/services"
 	"os"
+	config "pr-checker/config"
+	"pr-checker/handlers"
+	handler "pr-checker/handlers" // Import the handler package
+	"pr-checker/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
@@ -61,9 +61,8 @@ func (s *Server) routes() {
 		// PULL REQUEST ROUTES
 		pr := api.Group("/pr")
 		{
-			pr.GET("/:owner/:repo/:id", s.PRHandler.AnalyzePR)
+			pr.PUT("store/:owner/:repo/:id", s.PRHandler.StorePRData)
+			pr.GET("changes/:owner/:repo/:id", s.PRHandler.AnalyzePR)
 		}
 	}
-
-	// return r
 }

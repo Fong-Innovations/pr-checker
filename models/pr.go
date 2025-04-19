@@ -238,6 +238,76 @@ type Links struct {
 	Statuses       Link `json:"statuses"`
 }
 
+type PullRequestDBEntry struct {
+	Repo         string    // the name of the repository that the pr was made in
+	TargetBranch string    //the name of the branch being merged into, typically master source_branch string //the name of the branch with feature changes, typically feature branch
+	SourceBranch string    //the name of the branch being merged into, typically master source_branch string //the name of the branch with feature changes, typically feature branch
+	Merged       bool      //merged status
+	Comments     int       //count of comments made on pr
+	ChangedFiles int       //count of files changed in the pr
+	OpenedAt     time.Time //time pr was opened
+	MergedAt     time.Time //time pr was merged
+	ClosedAt     time.Time //time pr was closed
+	IssueUrl     string    //base url to fetch the issue
+	User         string    //username of pr author
+
+}
+
+// PullRequest represents the structure of a pull request in the GitHub API response.
+type PullRequestData struct {
+	Links               Links      `json:"_links"`
+	ActiveLockReason    *string    `json:"active_lock_reason,omitempty"`
+	Additions           int        `json:"additions"`
+	Assignee            *User      `json:"assignee,omitempty"`
+	Assignees           []User     `json:"assignees"`
+	AuthorAssociation   string     `json:"author_association"`
+	AutoMerge           *string    `json:"auto_merge,omitempty"`
+	Base                Branch     `json:"base"`
+	Body                string     `json:"body"`
+	BodyHTML            string     `json:"body_html"`
+	BodyText            string     `json:"body_text"`
+	ChangedFiles        int        `json:"changed_files"`
+	ClosedAt            *time.Time `json:"closed_at,omitempty"`
+	Comments            int        `json:"comments"`
+	CommentsURL         string     `json:"comments_url"`
+	Commits             int        `json:"commits"`
+	CommitsURL          string     `json:"commits_url"`
+	CreatedAt           time.Time  `json:"created_at"`
+	Deletions           int        `json:"deletions"`
+	DiffURL             string     `json:"diff_url"`
+	Draft               bool       `json:"draft"`
+	Head                Branch     `json:"head"`
+	HTMLURL             string     `json:"html_url"`
+	ID                  int64      `json:"id"`
+	IssueURL            string     `json:"issue_url"`
+	Labels              []Label    `json:"labels"`
+	Locked              bool       `json:"locked"`
+	MaintainerCanModify bool       `json:"maintainer_can_modify"`
+	MergeCommitSHA      string     `json:"merge_commit_sha"`
+	Mergeable           *bool      `json:"mergeable,omitempty"`
+	MergeableState      string     `json:"mergeable_state"`
+	Merged              bool       `json:"merged"`
+	MergedAt            *time.Time `json:"merged_at,omitempty"`
+	MergedBy            *User      `json:"merged_by,omitempty"`
+	Milestone           *Milestone `json:"milestone,omitempty"`
+	NodeID              string     `json:"node_id"`
+	Number              int        `json:"number"`
+	PatchURL            string     `json:"patch_url"`
+	Rebaseable          *bool      `json:"rebaseable,omitempty"`
+	RequestedReviewers  []User     `json:"requested_reviewers"`
+	RequestedTeams      []Team     `json:"requested_teams"`
+	ReviewCommentURL    string     `json:"review_comment_url"`
+	ReviewComments      int        `json:"review_comments"`
+	ReviewCommentsURL   string     `json:"review_comments_url"`
+	State               string     `json:"state"`
+	StatusesURL         string     `json:"statuses_url"`
+	Title               string     `json:"title"`
+	UpdatedAt           time.Time  `json:"updated_at"`
+	URL                 string     `json:"url"`
+	User                User       `json:"user"`
+}
+
+// Link represents a hyperlink in the "_links" section.
 type Link struct {
 	Href string `json:"href"`
 }

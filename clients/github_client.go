@@ -1,11 +1,18 @@
 package clients
 
 import (
-	"ai-api/models"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"pr-checker/models"
+)
+
+const (
+	githubBaseURL           = "https://api.github.com"
+	githubFetchPRURL        = githubBaseURL + "/repos/%s/%s/pulls/%s"          // /repos/{owner}/{repo}/pulls/{pull_number}"
+	githubPostPRCommentURL  = githubBaseURL + "/repos/%s/%s/pulls/%s/comments" // github treats prs as issues for comments!
+	githubFetchPRChangesURL = githubBaseURL + "/repos/%s/%s/pulls/%s/files"
 )
 
 // Concrete implementation
@@ -16,6 +23,7 @@ type GithubClient struct {
 }
 
 type GithubClientInterface interface {
+	FetchPRData(prRequestBody models.PullRequestRequest) (any, error)
 	FetchPullRequestChanges(prRequestBody models.PullRequestRequest) (*models.ChangeFiles, error)
 	PostPullRequestCommentOnLine(params models.GeneratePRCommentParams) (results []models.CommentBody, err error)
 }
@@ -28,10 +36,37 @@ func NewGithubClient(httpClient *http.Client, apiKey, baseUrl string) *GithubCli
 	}
 }
 
-const (
-	githubFetchPRChangesURL = "https://api.github.com/repos/%s/%s/pulls/%s/files"
-	githubPostPRCommentURL  = "https://api.github.com/repos/%s/%s/pulls/%s/comments" // github treats prs as issues for comments!
-)
+func (g *GithubClient) FetchPRData(prRequestBody models.PullRequestRequest) (*models.PullRequestData, error) {
+	// Create a new HTTP request
+	url := fmt.Sprintf(githubFetchPRURL, prRequestBody.OwnerID, prRequestBody.RepoID, prRequestBody.ID)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	req.Header.Set("Accept", "application/vnd.github.full+json")
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	req.Header.Set("Authorization", "Bearer "+g.APIKey)
+
+	resp, err := g.HttpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch PR from GitHub: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check if response status is OK
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-OK response from GitHub: %s", resp.Status)
+	}
+
+	// Parse the response body into a Go struct
+	var prResponse models.PullRequestData
+	err = json.NewDecoder(resp.Body).Decode(&prResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode PR response body: %w", err)
+	}
+
+	return &prResponse, nil
+}
 
 func (g *GithubClient) FetchPullRequestChanges(prRequestBody models.PullRequestRequest) (*models.ChangeFiles, error) {
 	// Create a new HTTP request
