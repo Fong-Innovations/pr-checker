@@ -18,9 +18,10 @@ func main() {
 		log.Fatal(err)
 		return
 	}
+
 	services := services.NewServices(*cfg)
 	server := router.NewServer(cfg, services)
 
-	server.Router.Run("localhost:8080")
+	server.Router.Run(":8080")
 
 }

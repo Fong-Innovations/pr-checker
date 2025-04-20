@@ -101,6 +101,11 @@ func (h *PRHandler) StorePRData(ctx *gin.Context) {
 		User:         pr.User.Login,
 	}
 
+	err = h.Service.PullRequestRepository.InsertPRDataEntry(ctx, smaller)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "error storing pr data", "error:": err.Error()})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "PR Fetched", "pr": smaller, "status": http.StatusOK})
 
 }

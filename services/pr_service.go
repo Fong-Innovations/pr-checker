@@ -7,6 +7,7 @@ import (
 	clients "pr-checker/clients"
 	"pr-checker/config"
 	"pr-checker/models"
+	"pr-checker/repository"
 	"strings"
 )
 
@@ -27,9 +28,10 @@ type DiffEntry struct {
 
 // PRService is a concrete implementation of the PRService interface
 type PRService struct {
-	githubClient clients.GithubClient
-	llmClient    clients.OpenFGAClient
-	cfg          config.Config
+	githubClient          clients.GithubClient
+	llmClient             clients.OpenAIClient
+	PullRequestRepository repository.PRDataRepository
+	cfg                   config.Config
 }
 
 // Responses include a maximum of 3000 files. The paginated response returns 30 files per page by default.
