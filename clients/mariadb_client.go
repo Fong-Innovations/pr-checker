@@ -19,7 +19,7 @@ type MariaDBClient struct {
 }
 
 func NewMariaDBClient(user, password, host string, port int, dbName string) (*MariaDBClient, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", user, "secret", host, port, dbName)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", user, password, host, port, dbName)
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open connection to MariaDB: %w", err)
