@@ -27,7 +27,6 @@ vendor/
 
 # Go modules
 go.sum
-go.mod
 
 # IDE and editor files
 .vscode/
