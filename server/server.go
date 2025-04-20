@@ -3,8 +3,7 @@ package router
 import (
 	"os"
 	config "pr-checker/config"
-	"pr-checker/handlers"
-	handler "pr-checker/handlers" // Import the handler package
+	handlers "pr-checker/handlers"
 	"pr-checker/services"
 
 	"github.com/gin-gonic/gin"
@@ -13,7 +12,7 @@ import (
 
 type Server struct {
 	Config    *config.Config
-	PRHandler *handler.PRHandler
+	PRHandler *handlers.PRHandler
 	Router    *gin.Engine
 }
 
