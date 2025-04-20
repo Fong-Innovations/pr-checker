@@ -32,17 +32,6 @@ func NewPRDataRepository(db *sql.DB) *PRDataRepository {
 	return &PRDataRepository{db: db}
 }
 
-// GetPRData retrieves pull request data from the database
-// func (r *PRDataRepository) GetPRData(id int) (string, error) {
-// 	var data string
-// 	query := "SELECT data FROM pr_data WHERE id = ?"
-// 	err := r.db.QueryRow(query, id).Scan(&data)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to get PR data: %w", err)
-// 	}
-// 	return data, nil
-// }
-
 // SavePRData saves pull request data to the database
 func (r *PRDataRepository) InsertPRDataEntry(ctx context.Context, data models.PullRequestDBEntry) error {
 	query := insertPRDataQuery
