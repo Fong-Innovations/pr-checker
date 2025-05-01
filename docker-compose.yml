@@ -1,8 +1,46 @@
 version: "3"
 services:
-  ai-api:
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    # restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: mariadb
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: secret
+    ports:
+      - 3306:3306
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-psecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5 
+  pr-checker:
     build:
       dockerfile: Dockerfile
       context: ./
     ports:
-    - 8080:8080
+      - 8080:8080
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - backend
+
+    command: air # Use air for live reload
+
+
+
+volumes:
+  mariadb_data:
+
+
+networks:
+  backend:
+    driver: bridge

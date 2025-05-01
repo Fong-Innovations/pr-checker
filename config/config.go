@@ -16,11 +16,17 @@ import (
 // Config struct to hold application configuration
 type Config struct {
 	GithubToken      string `koanf:"github_token"`
+	GithubAPIVersion string `koanf:"github_api_version"`
 	GithubBaseURL    string `koanf:"github_base_url"`
 	LLMServiceURL    string `koanf:"llm_base_url"`
 	LLMServiceAPIKey string `koanf:"llm_api_key"`
 	LLMModel         string `koanf:"llm_model"`
 	LLMAnalyzePrompt string `koanf:"llm_analyze_pr_prompt"`
+	DBUrl            string `koanf:"db_url"`
+	DBUser           string `koanf:"db_user"`
+	DBPort           int    `koanf:"db_port"`
+	DBPass           string `koanf:"db_pass"`
+	DBName           string `koanf:"db_name"`
 }
 
 // LoadConfig reads configuration from a .env file and environment variables.
@@ -33,7 +39,7 @@ func LoadConfig(envFile string) (*Config, error) {
 
 	var k = koanf.New(".")
 
-	// Load environment variables with the prefix "AICHECKER_".
+	// Load environment variables with the prefix "AI_CHECKER_".
 	err = k.Load(env.Provider("AI_CHECKER_", ".", func(s string) string {
 		// Transform environment variable names to match struct field names
 		return strings.ToLower(strings.TrimPrefix(s, "AI_CHECKER_"))

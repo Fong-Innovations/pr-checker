@@ -1,12 +1,13 @@
 package services
 
 import (
-	clients "ai-api/clients"
-	"ai-api/config"
-	"ai-api/models"
 	"context"
 	"fmt"
 	"net/url"
+	clients "pr-checker/clients"
+	"pr-checker/config"
+	"pr-checker/models"
+	"pr-checker/repository"
 	"strings"
 )
 
@@ -27,13 +28,14 @@ type DiffEntry struct {
 
 // PRService is a concrete implementation of the PRService interface
 type PRService struct {
-	githubClient clients.GithubClient
-	llmClient    clients.OpenFGAClient
-	cfg          config.Config
+	githubClient          clients.GithubClient
+	llmClient             clients.OpenAIClient
+	PullRequestRepository repository.PRDataRepository
+	cfg                   config.Config
 }
 
 // Responses include a maximum of 3000 files. The paginated response returns 30 files per page by default.
-// GetPRsFromGitHub is the implementation of the PRService interface method
+// GetPRChangeFilesFromGitHub is the implementation of the PRService interface method
 func (s *PRService) GetPRChangeFilesFromGitHub(ctx context.Context, prRequestBody models.PullRequestRequest) (*models.ChangeFiles, error) {
 	// Build GitHub API URL for fetching PRs
 	changeFiles, err := s.githubClient.FetchPullRequestChanges(prRequestBody)
@@ -55,6 +57,18 @@ func (s *PRService) GetPRChangeFilesFromGitHub(ctx context.Context, prRequestBod
 	}
 
 	return &result, nil
+}
+
+// Responses include a maximum of 3000 files. The paginated response returns 30 files per page by default.
+// GetPRsFromGitHub is the implementation of the PRService interface method
+func (s *PRService) GetPRDataFromGithub(ctx context.Context, prRequestBody models.PullRequestRequest) (*models.PullRequestData, error) {
+	// Build GitHub API URL for fetching PRs
+	pr, err := s.githubClient.FetchPRData(prRequestBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch PR changes: %w", err)
+	}
+
+	return pr, nil
 }
 
 // ReviewChanges reviews the changes in a pull request by analyzing the provided change files

@@ -16,11 +16,11 @@ import (
 	"github.com/openai/openai-go/packages/param"
 )
 
-// OpenFGAClient is a struct that represents a client for interacting with the OpenAI API.
+// OpenAIClient is a struct that represents a client for interacting with the OpenAI API.
 // It contains a pointer to the OpenAI client and slices for storing
 // style guide embeddings and chunks. The struct is used to generate review comments
 // based on code diffs and style guides.
-type OpenFGAClient struct {
+type OpenAIClient struct {
 	Client               *openai.Client
 	styleGuideEmbeddings [][]float64
 	styleGuideChunks     []string
@@ -37,12 +37,12 @@ type ScoredChunk struct {
 	Score float64
 }
 
-// OpenFGAClientInterface defines the methods for interacting with the OpenAI API
-type OpenFGAClientInterface interface {
+// OpenAIClientInterface defines the methods for interacting with the OpenAI API
+type OpenAIClientInterface interface {
 	GenerateReviewComment(ctx context.Context, codeDiff, promptTemplate string) (string, error)
 }
 
-// NewOpenFGAClient creates a new instance of OpenFGAClient with the provided HTTP client, API key, and base URL.
+// NewOpenAIClient creates a new instance of OpenAIClient with the provided HTTP client, API key, and base URL.
 // It initializes the OpenAI client, parses style guide chunks from an HTML file, and fetches embeddings for the
 // style guide chunks. If any error occurs during the initialization process, it logs the error and returns nil.
 //
@@ -52,7 +52,7 @@ type OpenFGAClientInterface interface {
 //   - url: The base URL for the OpenAI service.
 //
 // Returns:
-//   - A pointer to an OpenFGAClient instance if successful, or nil if an error occurs.
+//   - A pointer to an OpenAIClient instance if successful, or nil if an error occurs.
 //
 // Parameters:
 //   - ctx: The context for the API request, which can be used to control timeouts or cancellations.
@@ -65,7 +65,7 @@ type OpenFGAClientInterface interface {
 // Errors:
 //   - Returns an error if the OpenAI API call fails.
 //   - Returns an error if the API response does not contain any embeddings.
-func NewOpenFGAClient(httpClient *http.Client, key, url string) *OpenFGAClient {
+func NewOpenAIClient(httpClient *http.Client, key, url string) *OpenAIClient {
 
 	client := openai.NewClient(
 		option.WithAPIKey(key),
@@ -87,8 +87,8 @@ func NewOpenFGAClient(httpClient *http.Client, key, url string) *OpenFGAClient {
 		return nil
 	}
 
-	log.Println("creating client")
-	return &OpenFGAClient{
+	log.Println("creating OpenAI client")
+	return &OpenAIClient{
 		Client:               &client,
 		styleGuideChunks:     chunks,
 		styleGuideEmbeddings: embeddings,
@@ -106,7 +106,7 @@ func NewOpenFGAClient(httpClient *http.Client, key, url string) *OpenFGAClient {
 // Returns:
 //   - A string containing the generated review comment.
 //   - An error if the API call fails or any other issue occurs.
-func (o *OpenFGAClient) GenerateReviewComment(ctx context.Context, codeDiff, promptTemplate string) (string, error) {
+func (o *OpenAIClient) GenerateReviewComment(ctx context.Context, codeDiff, promptTemplate string) (string, error) {
 
 	topChunks, err := FindRelevantChunks(ctx, o.Client, codeDiff, o.styleGuideChunks, o.styleGuideEmbeddings)
 	if err != nil {

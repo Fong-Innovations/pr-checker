@@ -1,9 +1,9 @@
 package main
 
 import (
-	"ai-api/config"
-	router "ai-api/server"
-	"ai-api/services"
+	"pr-checker/config"
+	router "pr-checker/server"
+	"pr-checker/services"
 
 	"github.com/gofiber/fiber/v2/log"
 )
@@ -18,9 +18,10 @@ func main() {
 		log.Fatal(err)
 		return
 	}
+
 	services := services.NewServices(*cfg)
 	server := router.NewServer(cfg, services)
 
-	server.Router.Run("localhost:8080")
+	server.Router.Run(":8080")
 
 }

@@ -8,9 +8,9 @@ This is a Go-based web application built with the Gin framework. The application
 
 To build and run the application using Docker, follow these steps:
 
-1. Build the Docker image:
+1. Build the Docker images:
    ```bash
-   docker build -t gin-app .
+   docker-compose up --build
    ```
 
 ### Running Locally with Live Reload
