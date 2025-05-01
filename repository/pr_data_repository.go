@@ -32,10 +32,10 @@ func NewPRDataRepository(db *sql.DB) *PRDataRepository {
 	return &PRDataRepository{db: db}
 }
 
-// SavePRData saves pull request data to the database
+// InsertPRDataEntry saves pull request data to the database
 func (r *PRDataRepository) InsertPRDataEntry(ctx context.Context, data models.PullRequestDBEntry) error {
 	query := insertPRDataQuery
-	_, err := r.db.Exec(query, data.Repo, data.TargetBranch, data.SourceBranch, data.Merged, data.Comments, data.ChangedFiles, data.OpenedAt, data.MergedAt, data.ClosedAt, data.IssueUrl, data.User)
+	_, err := r.db.Exec(query, data.Repo, data.TargetBranch, data.SourceBranch, data.Merged, data.Comments, data.ChangedFiles, data.OpenedAt, data.MergedAt, data.ClosedAt, data.IssueURL, data.User)
 	if err != nil {
 		return fmt.Errorf("failed to save PR data: %w", err)
 	}

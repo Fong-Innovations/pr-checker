@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"pr-checker/models"
 )
@@ -11,27 +12,29 @@ import (
 const (
 	githubBaseURL           = "https://api.github.com"
 	githubFetchPRURL        = githubBaseURL + "/repos/%s/%s/pulls/%s"          // /repos/{owner}/{repo}/pulls/{pull_number}"
-	githubPostPRCommentURL  = githubBaseURL + "/repos/%s/%s/pulls/%s/comments" // github treats prs as issues for comments!
-	githubFetchPRChangesURL = githubBaseURL + "/repos/%s/%s/pulls/%s/files"
+	githubPostPRCommentURL  = githubBaseURL + "/repos/%s/%s/pulls/%s/comments" // /repos/{owner}/{repo}/pulls/{pull_number}/comments"
+	githubFetchPRChangesURL = githubBaseURL + "/repos/%s/%s/pulls/%s/files"    // /repos/{owner}/{repo}/pulls/{pull_number}/files"
 )
 
 // Concrete implementation
 type GithubClient struct {
 	HttpClient *http.Client
 	APIKey     string
+	APIVersion string
 	BaseURL    string
 }
 
 type GithubClientInterface interface {
-	FetchPRData(prRequestBody models.PullRequestRequest) (any, error)
+	FetchPRData(prRequestBody models.PullRequestRequest) (*models.PullRequestData, error)
 	FetchPullRequestChanges(prRequestBody models.PullRequestRequest) (*models.ChangeFiles, error)
 	PostPullRequestCommentOnLine(params models.GeneratePRCommentParams) (results []models.CommentBody, err error)
 }
 
-func NewGithubClient(httpClient *http.Client, apiKey, baseUrl string) *GithubClient {
+func NewGithubClient(httpClient *http.Client, apiKey, apiVersion, baseUrl string) *GithubClient {
 	return &GithubClient{
 		HttpClient: httpClient,
 		APIKey:     apiKey,
+		APIVersion: apiVersion,
 		BaseURL:    baseUrl,
 	}
 }
@@ -62,6 +65,7 @@ func (g *GithubClient) FetchPRData(prRequestBody models.PullRequestRequest) (*mo
 	var prResponse models.PullRequestData
 	err = json.NewDecoder(resp.Body).Decode(&prResponse)
 	if err != nil {
+		log.Printf("Error decoding PullRequestData: %v", err)
 		return nil, fmt.Errorf("failed to decode PR response body: %w", err)
 	}
 
@@ -94,7 +98,8 @@ func (g *GithubClient) FetchPullRequestChanges(prRequestBody models.PullRequestR
 	var prResponse models.ChangeFiles
 	err = json.NewDecoder(resp.Body).Decode(&prResponse.Files)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode PR response body: %w", err)
+		log.Printf("Error decoding ChangeFiles: %v", err)
+		return nil, fmt.Errorf("failed to decode ChangeFiles: %w", err)
 	}
 
 	return &prResponse, nil
@@ -121,7 +126,7 @@ func (g *GithubClient) PostPullRequestCommentOnLine(params models.GeneratePRComm
 
 	req.Header.Set("Authorization", "token "+g.APIKey)
 	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+	req.Header.Set("X-GitHub-Api-Version", g.APIVersion)
 
 	resp, err := g.HttpClient.Do(req)
 	if err != nil {

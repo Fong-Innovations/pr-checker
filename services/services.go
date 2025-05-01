@@ -1,11 +1,11 @@
 package services
 
 import (
-	"log"
 	"net/http"
 	clients "pr-checker/clients"
 	"pr-checker/config"
 	"pr-checker/repository"
+	zlog "pr-checker/utils"
 	"time"
 )
 
@@ -21,18 +21,19 @@ func NewServices(cfg config.Config) *Services {
 		Timeout: 60 * time.Second,
 	}
 
-	mariadDBClient, err := clients.NewMariaDBClient(cfg.DBUser, cfg.DBPass, cfg.DBUrl, cfg.DBPort, cfg.DBName)
+	mariadDBClient, err := clients.GetMariaDBClient(cfg.DBUser, cfg.DBPass, cfg.DBUrl, cfg.DBPort, cfg.DBName)
 	if err != nil {
-		log.Printf("Error creating database client:: %v", err)
+		zlog.Log.Error().Err(err).Msgf("error creating database client")
+		return nil
 	}
 
 	prDataRepository := repository.NewPRDataRepository(mariadDBClient.DB)
-	githubClient := clients.NewGithubClient(httpClient, cfg.GithubToken, cfg.GithubBaseURL)
-	OpenAIClient := clients.NewOpenAIClient(httpClient, cfg.LLMServiceAPIKey, cfg.LLMServiceURL)
+	githubClient := clients.NewGithubClient(httpClient, cfg.GithubToken, cfg.GithubAPIVersion, cfg.GithubBaseURL)
+	openAIClient := clients.NewOpenAIClient(httpClient, cfg.LLMServiceAPIKey, cfg.LLMServiceURL)
 
 	prService := &PRService{
 		githubClient:          *githubClient,
-		llmClient:             *OpenAIClient,
+		llmClient:             *openAIClient,
 		PullRequestRepository: *prDataRepository,
 		cfg:                   cfg,
 	}

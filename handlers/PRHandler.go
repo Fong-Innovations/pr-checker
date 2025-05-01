@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"pr-checker/models"
 	"pr-checker/services"
+	zlog "pr-checker/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,6 +25,10 @@ func NewPRHandler(service *services.PRService) *PRHandler {
 	return &PRHandler{
 		Service: service,
 	}
+}
+
+func (h *PRHandler) TestFunction(ctx *gin.Context) {
+	zlog.Log.Info().Msg("Test function called")
 }
 
 // GetPR handles GET requests to fetch a single PR by ID
@@ -46,14 +51,14 @@ func (h *PRHandler) AnalyzePR(ctx *gin.Context) {
 	// parse pr request data
 	prRequestBody, err := parseFetchPullRequestBody(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error parsing request body. error:": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "error parsing request body", "error": err.Error()})
 		return
 	}
 
 	// fetch changes from github for requested pr
 	pr, err := h.Service.GetPRChangeFilesFromGitHub(ctx, *prRequestBody)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "error fetching pr changes", "error:": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "error fetching from github", "error:": err.Error()})
 		return
 	}
 
@@ -76,6 +81,7 @@ func (h *PRHandler) AnalyzePR(ctx *gin.Context) {
 
 func (h *PRHandler) StorePRData(ctx *gin.Context) {
 	// parse pr request data
+
 	prRequestBody, err := parseFetchPullRequestBody(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error parsing request body. error:": err.Error()})
@@ -95,9 +101,9 @@ func (h *PRHandler) StorePRData(ctx *gin.Context) {
 		Comments:     pr.Comments,
 		ChangedFiles: pr.ChangedFiles,
 		OpenedAt:     pr.CreatedAt,
-		MergedAt:     *pr.MergedAt,
-		ClosedAt:     *pr.ClosedAt,
-		IssueUrl:     pr.IssueURL,
+		MergedAt:     pr.MergedAt,
+		ClosedAt:     pr.ClosedAt,
+		IssueURL:     pr.IssueURL,
 		User:         pr.User.Login,
 	}
 
@@ -106,7 +112,7 @@ func (h *PRHandler) StorePRData(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"message": "error storing pr data", "error:": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "PR Fetched", "pr": smaller, "status": http.StatusOK})
+	ctx.JSON(http.StatusOK, gin.H{"message": "PR Fetched", "pr": smaller})
 
 }
 
@@ -116,6 +122,7 @@ func parseFetchPullRequestBody(c *gin.Context) (*models.PullRequestRequest, erro
 	req.RepoID = c.Param("repo")
 	req.ID = c.Param("id")
 	if req.ID == "" || req.OwnerID == "" || req.RepoID == "" {
+		zlog.Log.Info().Msg("missing field in FetchPullRequest body")
 		return nil, fmt.Errorf("missing field in FetchPullRequest body")
 	}
 	return req, nil

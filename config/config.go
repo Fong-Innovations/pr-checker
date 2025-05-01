@@ -16,6 +16,7 @@ import (
 // Config struct to hold application configuration
 type Config struct {
 	GithubToken      string `koanf:"github_token"`
+	GithubAPIVersion string `koanf:"github_api_version"`
 	GithubBaseURL    string `koanf:"github_base_url"`
 	LLMServiceURL    string `koanf:"llm_base_url"`
 	LLMServiceAPIKey string `koanf:"llm_api_key"`

@@ -16,6 +16,11 @@ services:
       - mariadb_data:/var/lib/mysql
     networks:
       - backend
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-psecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5 
   pr-checker:
     build:
       dockerfile: Dockerfile
@@ -23,10 +28,13 @@ services:
     ports:
       - 8080:8080
     depends_on:
-     - mariadb
-
+      mariadb:
+        condition: service_healthy
     networks:
       - backend
+
+    command: air # Use air for live reload
+
 
 
 volumes:

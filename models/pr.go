@@ -239,17 +239,17 @@ type Links struct {
 }
 
 type PullRequestDBEntry struct {
-	Repo         string    // the name of the repository that the pr was made in
-	TargetBranch string    //the name of the branch being merged into, typically master source_branch string //the name of the branch with feature changes, typically feature branch
-	SourceBranch string    //the name of the branch being merged into, typically master source_branch string //the name of the branch with feature changes, typically feature branch
-	Merged       bool      //merged status
-	Comments     int       //count of comments made on pr
-	ChangedFiles int       //count of files changed in the pr
-	OpenedAt     time.Time //time pr was opened
-	MergedAt     time.Time //time pr was merged
-	ClosedAt     time.Time //time pr was closed
-	IssueUrl     string    //base url to fetch the issue
-	User         string    //username of pr author
+	Repo         string     // the name of the repository that the pr was made in
+	TargetBranch string     //the name of the branch being merged into, typically master
+	SourceBranch string     // the name of the branch with feature changes, typically feature branch
+	Merged       bool       //merged status
+	Comments     int        //count of comments made on pr
+	ChangedFiles int        //count of files changed in the pr
+	OpenedAt     time.Time  //time pr was opened
+	MergedAt     *time.Time //time pr was merged
+	ClosedAt     *time.Time //time pr was closed
+	IssueURL     string     //base url to fetch the issue
+	User         string     //username of pr author
 
 }
 

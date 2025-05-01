@@ -35,7 +35,7 @@ type PRService struct {
 }
 
 // Responses include a maximum of 3000 files. The paginated response returns 30 files per page by default.
-// GetPRsFromGitHub is the implementation of the PRService interface method
+// GetPRChangeFilesFromGitHub is the implementation of the PRService interface method
 func (s *PRService) GetPRChangeFilesFromGitHub(ctx context.Context, prRequestBody models.PullRequestRequest) (*models.ChangeFiles, error) {
 	// Build GitHub API URL for fetching PRs
 	changeFiles, err := s.githubClient.FetchPullRequestChanges(prRequestBody)

@@ -38,7 +38,7 @@ type ScoredChunk struct {
 }
 
 // OpenAIClientInterface defines the methods for interacting with the OpenAI API
-type OpenClientInterface interface {
+type OpenAIClientInterface interface {
 	GenerateReviewComment(ctx context.Context, codeDiff, promptTemplate string) (string, error)
 }
 
